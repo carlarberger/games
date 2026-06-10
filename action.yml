@@ -1,5 +1,50 @@
-- name: Figma branches status
-  uses: yceballost/figma-branches-status@v1
+name: "Figma branches status"
+description: "Sync open Figma branches into a GitHub issue."
+author: "Ignacio Ceballos"
+branding:
+  icon: "play"
+  color: "orange"
 
-  - name: Supabase CLI Action
-  uses: supabase/setup-cli@v2.1.1
+inputs:
+  figma-token:
+    description: "Figma API token."
+    required: true
+  github-token:
+    description: "GitHub token to access repos."
+    required: true
+  project-ids:
+    description: "Comma-separated list of Figma project IDs."
+    required: true
+  issue-number:
+    description: "GitHub issue number where the status will be updated."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.x"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip install requests pandas tabulate python-dotenv
+
+    - name: Copy script to workspace
+      shell: bash
+      run: |
+        cp "$GITHUB_ACTION_PATH/sync-branches.py" .
+
+    - name: Run branch sync
+      shell: bash
+      run: python3 sync-branches.py
+      env:
+        FIGMA_TOKEN: ${{ inputs.figma-token }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PROJECT_ID: ${{ inputs.project-ids }}
+        ISSUE_NUMBER: ${{ inputs.issue-number }}
